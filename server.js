@@ -1,41 +1,34 @@
-require('dotenv').config();
-// Initialize express
 const express = require('express')
 const app = express()
+
 // require handlebars
 const exphbs = require('express-handlebars');
 const Handlebars = require('handlebars')
 const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
-
 // Use "main" as our default layout
 app.engine('handlebars', exphbs.engine({ defaultLayout: 'main', handlebars: allowInsecurePrototypeAccess(Handlebars) }));
 // Use handlebars to render
 app.set('view engine', 'handlebars');
 
-// Security
+//required
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+//Auth
+const checkAuth = require('./middleware/checkAuth');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 app.use(cookieParser());
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-require('./controllers/posts')(app);
-require('./controllers/auth.js')(app);
-
+app.use(checkAuth);
 
 // Set db
 require('./data/reddit-db');
 
-// Render the "home" layout for the main page and send the following msg
-app.get('/', (req, res) => {
-    res.render('home', { msg: 'Handlebars are Cool!' });
-  })
+//posts controller
+require('./controllers/posts')(app);
+require('./controllers/auth.js')(app);
 
-app.get('/posts/new', (req, res) => {
-  res.render('posts-new');
-})
-// Choose a port to listen on
 const port = process.env.PORT || 3000;
 
 // Tell the app what port to listen on

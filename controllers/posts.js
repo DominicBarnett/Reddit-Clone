@@ -4,19 +4,23 @@ const Comment = require('../models/comment');
 module.exports = (app) => {
 
     app.get('/', (req, res) => {
-        Post.find({}).lean()
-          .then((posts) => res.render('posts-index', { posts }))
+        const currentUser = req.user;
+      
+        Post.find({})
+          .then((posts) => res.render('posts-index', { posts, currentUser }))
           .catch((err) => {
             console.log(err.message);
-          })
+          });
       });
-  // CREATE
-  app.post('/posts/new', (req, res) => {
-    // INSTANTIATE INSTANCE OF POST MODEL
-    const post = new Post(req.body);
-
-    // SAVE INSTANCE OF POST MODEL TO DB AND REDIRECT TO THE ROOT
-    post.save(() => res.redirect('/'));
+// CREATE
+app.post('/posts/new', (req, res) => {
+    if (req.user) {
+      const post = new Post(req.body);
+  
+      post.save(() => res.redirect('/'));
+    } else {
+      return res.status(401); // UNAUTHORIZED
+    }
   });
   app.get('/posts/new', (req, res) => {
     res.render('posts-new')
