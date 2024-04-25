@@ -42,14 +42,15 @@ app.get('/', (req, res) => {
   });
 
 // LOOK UP THE POST
-app.get('/posts/:id', (req, res) => {
+app.get('/posts/:id', function (req, res) {
   const currentUser = req.user;
+  // LOOK UP THE POST
 
-  Post.findById(req.params.id).lean().populate('comments').populate('author')
-    .then((post) => res.render('posts-show', { post, currentUser }))
-    .catch((err) => {
-      console.log(err.message);
-    });
+  Post.findById(req.params.id).lean().populate({ path:'comments', populate: { path: 'author' } }).populate('author')
+      .then((post) => res.render('posts-show', { post, currentUser }))
+      .catch((err) => {
+          console.log(err.message);
+      });
 });
 // SUBREDDIT
 app.get('/n/:subreddit', (req, res) => {
@@ -61,23 +62,6 @@ app.get('/n/:subreddit', (req, res) => {
       console.log(err);
     });
 });
-  // CREATE Comment
-app.post('/posts/:postId/comments', (req, res) => {
-    // INSTANTIATE INSTANCE OF MODEL
-    const comment = new Comment(req.body);
-  
-    // SAVE INSTANCE OF Comment MODEL TO DB
-    comment
-      .save()
-      .then(() => Post.findById(req.params.postId))
-      .then((post) => {
-        post.comments.unshift(comment);
-        return post.save();
-      })
-      .then(() => res.redirect('/'))
-      .catch((err) => {
-        console.log(err);
-      });
-  });
+
 };
 

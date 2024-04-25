@@ -1,17 +1,23 @@
-require('./controllers/comments.js')(app);
 const Comment = require('../models/comment');
+const Post = require('../models/post')
 
 module.exports = (app) => {
-// CREATE Comment
-app.post('/posts/:postId/comments', (req, res) => {
-    // INSTANTIATE INSTANCE OF MODEL
+  // CREATE Comment
+  app.post('/posts/:postId/comments', (req, res) => {
     const comment = new Comment(req.body);
-  
-    // SAVE INSTANCE OF Comment MODEL TO DB
+    comment.author = req.user._id;
     comment
       .save()
-      // REDIRECT TO THE ROOT
-      .then(() => res.redirect('/'))
+      .then(() => Promise.all([
+        Post.findById(req.params.postId),
+      ]))
+      .then(([post]) => {
+        post.comments.unshift(comment);
+        return Promise.all([
+          post.save(),
+        ]);
+      })
+      .then(() => res.redirect(`/posts/${req.params.postId}`))
       .catch((err) => {
         console.log(err);
       });
